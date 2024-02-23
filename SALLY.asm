@@ -113,8 +113,8 @@
 0060 0664      ld      b,64h		; seek track 00 for all 4 drives
 0062 7a        ld      a,d		; select all drives
 0063 d330      out     (30h),a            
-0065 e3        ex      (sp),hl		; ???
-0066 e3        ex      (sp),hl		; ???
+0065 e3        ex      (sp),hl		; ??? waste some time
+0066 e3        ex      (sp),hl		; 19 T-states 4,75uS
 0067 3e6b      ld      a,6bh		; step out
 0069 cd6bf3    call    0f36bh		; write A to FDC command and wait
                                           
@@ -122,7 +122,7 @@
 006e 7b        ld      a,e                
 006f f640      or      40h                
 0071 d330      out     (30h),a		; selct one drive
-0073 e3        ex      (sp),hl            
+0073 e3        ex      (sp),hl  
 0074 e3        ex      (sp),hl            
 0075 cd91f3    call    0f391h		; stop command, get status
 0078 cb57      bit     2,a                
@@ -890,19 +890,19 @@
 04da 00        nop     
 04db c9        ret     
 
-04dc 79        ld      a,c
+04dc 79        ld      a,c		;send c to printer
 04dd d320      out     (20h),a
 04df e3        ex      (sp),hl
 04e0 e3        ex      (sp),hl
 04e1 3e19      ld      a,19h
-04e3 d353      out     (53h),a
+04e3 d353      out     (53h),a		;printer strobe
 04e5 3d        dec     a
 04e6 20fd      jr      nz,04e5h         ; (-03h)
 04e8 d353      out     (53h),a
 04ea c9        ret     
 
 04eb 2a47ff    ld      hl,(0ff47h)
-04ee db20      in      a,(20h)
+04ee db20      in      a,(20h)		;load printer contol
 04f0 a5        and     l
 04f1 ac        xor     h
 04f2 c9        ret     
@@ -1201,15 +1201,16 @@
 06d9 11aa0a    ld      de,0aaah		; read atari ser 19200 Baud
 06dc 010000    ld      bc,0000h
 06df 1823      jr      0704h            ; (+23h)
-06e1 79        ld      a,c
-06e2 80        add     a,b
-06e3 ce00      adc     a,00h
-06e5 4f        ld      c,a
-06e6 e3        ex      (sp),hl
-06e7 e3        ex      (sp),hl
-06e8 e3        ex      (sp),hl
-06e9 e3        ex      (sp),hl
-06ea 0608      ld      b,08h		; 7
+06e1 79        ld      a,c		;4
+06e2 80        add     a,b		;4
+06e3 ce00      adc     a,00h		;7
+06e5 4f        ld      c,a		;4
+06e6 e3        ex      (sp),hl		;19
+06e7 e3        ex      (sp),hl		;19
+06e8 e3        ex      (sp),hl		;19
+06e9 e3        ex      (sp),hl		;19
+06ea 0608      ld      b,08h		;7	102
+
 06ec 3e0b      ld      a,0bh		; 7
 06ee 3e0b      ld      a,0bh		; 7
 06f0 00        nop     			; 4
@@ -1219,6 +1220,7 @@
 06f7 17        rla     			; 4
 06f8 cb1a      rr      d		; 8
 06fa 10f0      djnz    06ech            ; 13	208
+
 06fc 42        ld      b,d
 06fd 72        ld      (hl),d
 06fe 23        inc     hl
@@ -1237,8 +1239,8 @@
 0711 20ce      jr      nz,06e1h         ; start-bit
 0713 1b        dec     de                 
 0714 7a        ld      a,d                
-0715 b3        or      e                  
-0716 20f6      jr      nz,070eh         ;  
+0715 b3        or      e                ; carry clear  
+0716 20f6      jr      nz,070eh         ; de not zero, try again
 0718 c9        ret     			; return carry clear, zero
 
 0719 af        xor     a
@@ -1297,7 +1299,7 @@
 0769 f3        di                         
 076a cdd9f6    call    0f6d9h		; read 2 atari bytes
 076d fb        ei                         
-076e 30f6      jr      nc,0766h         ; nothing read read again
+076e 30f6      jr      nc,0766h         ; nothing read, read again
 0770 2afec2    ld      hl,(0c2feh)	; load hl with bytes read
 0773 11e680    ld      de,80e6h           
 0776 b7        or      a		; clear carry
@@ -1323,26 +1325,29 @@
 07a3 224bff    ld      (0ff4bh),hl
 07a6 21ffbf    ld      hl,0bfffh
 07a9 224dff    ld      (0ff4dh),hl
-07ac cdd1f8    call    0f8d1h
+
+07ac cdd1f8    call    0f8d1h		;output to printer
 07af 2a3aff    ld      hl,(0ff3ah)
-07b2 cdbdf7    call    0f7bdh
-07b5 2a3cff    ld      hl,(0ff3ch)
-07b8 cdbdf7    call    0f7bdh
+07b2 cdbdf7    call    0f7bdh		;call (ff3a)
+07b5 2a3cff    ld      hl,(0ff3ch)	
+07b8 cdbdf7    call    0f7bdh		;call (ff3c)
 07bb 18ef      jr      07ach            ; (-11h)
+
 07bd e9        jp      (hl)
-07be db70      in      a,(70h)
+
+07be db70      in      a,(70h)		;in SIO
 07c0 e68a      and     8ah
 07c2 fe8a      cp      8ah
 07c4 c0        ret     nz
 
 07c5 f3        di      
 07c6 af        xor     a
-07c7 3255ff    ld      (0ff55h),a
+07c7 3255ff    ld      (0ff55h),a	;select RS232 or SIO
 07ca d357      out     (57h),a
 07cc 3ed7      ld      a,0d7h
-07ce d380      out     (80h),a
+07ce d380      out     (80h),a		;program CTC
 07d0 3e01      ld      a,01h
-07d2 d380      out     (80h),a
+07d2 d380      out     (80h),a		;counter
 07d4 2199f6    ld      hl,0f699h
 07d7 2210ff    ld      (0ff10h),hl
 07da fb        ei      
@@ -1353,7 +1358,6 @@
 07e2 3a55ff    ld      a,(0ff55h)
 07e5 b7        or      a
 07e6 c8        ret     z
-
 07e7 fe01      cp      01h
 07e9 2808      jr      z,07f3h          ; (+08h)
 07eb f3        di      
@@ -1361,6 +1365,7 @@
 07ee d380      out     (80h),a
 07f0 fb        ei      
 07f1 1816      jr      0809h            ; (+16h)
+
 07f3 3afbc2    ld      a,(0c2fbh)
 07f6 2a38ff    ld      hl,(0ff38h)
 07f9 cd10f8    call    0f810h
@@ -1369,6 +1374,7 @@
 0801 cd10f8    call    0f810h
 0804 2003      jr      nz,0809h         ; (+03h)
 0806 cdbdf7    call    0f7bdh
+
 0809 21bef7    ld      hl,0f7beh
 080c 223aff    ld      (0ff3ah),hl
 080f c9        ret     
@@ -1511,28 +1517,29 @@
 08cb e1        pop     hl
 08cc 10c0      djnz    088eh            ; (-40h)
 08ce c354fc    jp      0fc54h
-08d1 2a4fff    ld      hl,(0ff4fh)
+
+08d1 2a4fff    ld      hl,(0ff4fh)	;test ff4f if zero
 08d4 7c        ld      a,h
 08d5 b5        or      l
-08d6 c8        ret     z
+08d6 c8        ret     z		;yes, return
 
-08d7 cd15f0    call    0f015h
+08d7 cd15f0    call    0f015h		;call reader (IN printer)
 08da c0        ret     nz
 
 08db 2a53ff    ld      hl,(0ff53h)
-08de cdf1f8    call    0f8f1h
+08de cdf1f8    call    0f8f1h		;compute new value (0 or hl+1)
 08e1 ed5353ff  ld      (0ff53h),de
-08e5 4e        ld      c,(hl)
-08e6 cd12f0    call    0f012h
-08e9 2a4fff    ld      hl,(0ff4fh)
+08e5 4e        ld      c,(hl)		;output (hl) to printer
+08e6 cd12f0    call    0f012h		;call PUNCH
+08e9 2a4fff    ld      hl,(0ff4fh)	;decrement value in ff4f/50
 08ec 2b        dec     hl
 08ed 224fff    ld      (0ff4fh),hl
 08f0 c9        ret     
 
-08f1 eb        ex      de,hl
-08f2 2a4bff    ld      hl,(0ff4bh)
+08f1 eb        ex      de,hl		;save hl to de
+08f2 2a4bff    ld      hl,(0ff4bh)	;add (ff4b) to (ff53)
 08f5 19        add     hl,de
-08f6 e5        push    hl
+08f6 e5        push    hl		;save result
 08f7 13        inc     de
 08f8 2a4dff    ld      hl,(0ff4dh)
 08fb b7        or      a
@@ -2352,45 +2359,48 @@
 0ef9 02        ld      (bc),a
 0efa 13        inc     de
 0efb 0a        ld      a,(bc)
-0efc ff        rst     38h
-0efd ff        rst     38h
-0efe ff        rst     38h
-0eff ff        rst     38h
-0f00 00        nop     
-0f01 00        nop     
-0f02 00        nop     
-0f03 00        nop     
-0f04 1010      djnz    0f16h            ; (+10h)
-0f06 1010      djnz    0f18h            ; (+10h)
-0f08 00        nop     
-0f09 ff        rst     38h
-0f0a 010000    ld      bc,0000h
-0f0d 00        nop     
-0f0e 320a00    ld      (000ah),a
-0f11 00        nop     
-0f12 00        nop     
-0f13 00        nop     
-0f14 21f8be    ld      hl,0bef8h
-0f17 f7        rst     30h
-0f18 e1        pop     hl
-0f19 f7        rst     30h
-0f1a 02        ld      (bc),a
-0f1b 0d        dec     c
-0f1c 0a        ld      a,(bc)
-0f1d 00        nop     
-0f1e 00        nop     
-0f1f 00        nop     
-0f20 00        nop     
-0f21 3c        inc     a
-0f22 00        nop     
-0f23 80        add     a,b
-0f24 00        nop     
-0f25 b7        or      a
-0f26 fb        ei      
-0f27 00        nop     
-0f28 c5        push    bc
-0f29 ff        rst     38h
-0f2a 0f        rrca    
+
+;int values of variables at 0ff20h
+ff20	0efc ff        
+ff21	0efd ff        
+ff22	0efe ff        
+ff23	0eff ff        
+ff24	0f00 00        
+ff25	0f01 00        
+ff26	0f02 00        
+ff27	0f03 00        
+ff28	0f04 1010      
+ff2a	0f06 1010      
+ff2c	0f08 00        
+ff2d	0f09 ff        
+ff2e	0f0a 010000    
+ff31	0f0d 00        
+ff32	0f0e 320a00    
+ff35	0f11 00        
+ff36	0f12 00        
+ff37	0f13 00        
+ff38	0f14 21f8be    		;ff3a f7be
+ff3b	0f17 f7        
+ff3c	0f18 e1        
+ff3d	0f19 f7        
+ff3e	0f1a 02        
+ff3f	0f1b 0d        
+ff40	0f1c 0a        
+ff41	0f1d 00        
+ff42	0f1e 00        
+ff43	0f1f 00        
+ff44	0f20 00        
+ff45	0f21 3c        
+ff46	0f22 00        
+ff47	0f23 80        
+ff48	0f24 00        
+ff49	0f25 b7        
+ff4a	0f26 fb        
+ff4b	0f27 00        
+ff4c	0f28 c5        
+ff4d	0f29 ff        
+ff4e	0f2a 0f        
+
 0f2b 73        ld      (hl),e
 0f2c 00        nop     
 0f2d 00        nop     
