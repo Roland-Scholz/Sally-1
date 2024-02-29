@@ -1120,7 +1120,6 @@ f762:		ld	a,01h
 		ld	de,80e6h
 		or	a
 		sbc	hl,de	
-		pop	af
 		jp	z,0f3deh
 		
 		ld	a,03h

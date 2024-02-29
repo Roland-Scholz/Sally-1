@@ -1158,20 +1158,24 @@
 0694 d381      out     (81h),a
 0696 fb        ei      
 0697 18fe      jr      0697h            ; (-02h)
+
+;--------------------------------------------------
+; CTC interrupt routine CMD
+;--------------------------------------------------
 0699 08        ex      af,af'
 069a d9        exx     
 069b 3eff      ld      a,0ffh
 069d 3255ff    ld      (0ff55h),a
-06a0 d357      out     (57h),a
+06a0 d357      out     (57h),a		; switch to sio
 06a2 21fbc2    ld      hl,0c2fbh
-06a5 cdd9f6    call    0f6d9h
-06a8 300a      jr      nc,06b4h         ; (+0ah)
-06aa 2b        dec     hl
+06a5 cdd9f6    call    0f6d9h		; read 5 bytes (command frame)
+06a8 300a      jr      nc,06b4h         ; not read correctly, leave
+06aa 2b        dec     hl		; load checksum 
 06ab 7e        ld      a,(hl)
 06ac b9        cp      c
-06ad 2005      jr      nz,06b4h         ; (+05h)
+06ad 2005      jr      nz,06b4h         ; not correct, leave
 06af 3e01      ld      a,01h
-06b1 3255ff    ld      (0ff55h),a
+06b1 3255ff    ld      (0ff55h),a	; 1 = command frame successfully read
 06b4 08        ex      af,af'
 06b5 d9        exx     
 06b6 fb        ei      
@@ -1326,7 +1330,10 @@
 07a6 21ffbf    ld      hl,0bfffh
 07a9 224dff    ld      (0ff4dh),hl
 
-07ac cdd1f8    call    0f8d1h		;output to printer
+;--------------------------------------------------
+; Looks like the main Atari SIO handler loop
+;--------------------------------------------------
+07ac cdd1f8    call    0f8d1h		;output to printer?
 07af 2a3aff    ld      hl,(0ff3ah)
 07b2 cdbdf7    call    0f7bdh		;call (ff3a)
 07b5 2a3cff    ld      hl,(0ff3ch)	
@@ -1340,11 +1347,14 @@
 07c2 fe8a      cp      8ah
 07c4 c0        ret     nz
 
+;--------------------------------------------------
+; program CTC to detect CMD
+;--------------------------------------------------
 07c5 f3        di      
 07c6 af        xor     a
-07c7 3255ff    ld      (0ff55h),a	;select RS232 or SIO
+07c7 3255ff    ld      (0ff55h),a	;select 0=CMD or 1=SIO
 07ca d357      out     (57h),a
-07cc 3ed7      ld      a,0d7h
+07cc 3ed7      ld      a,0d7h		;
 07ce d380      out     (80h),a		;program CTC
 07d0 3e01      ld      a,01h
 07d2 d380      out     (80h),a		;counter
@@ -1355,11 +1365,14 @@
 07de 223aff    ld      (0ff3ah),hl
 07e1 c9        ret     
 
+;--------------------------------------------------
+; handle command frame
+;--------------------------------------------------
 07e2 3a55ff    ld      a,(0ff55h)
 07e5 b7        or      a
-07e6 c8        ret     z
-07e7 fe01      cp      01h
-07e9 2808      jr      z,07f3h          ; (+08h)
+07e6 c8        ret     z		;no frame received yet
+07e7 fe01      cp      01h		;frame received
+07e9 2808      jr      z,07f3h          ;handle it 
 07eb f3        di      
 07ec 3e03      ld      a,03h
 07ee d380      out     (80h),a
@@ -1367,7 +1380,7 @@
 07f1 1816      jr      0809h            ; (+16h)
 
 07f3 3afbc2    ld      a,(0c2fbh)
-07f6 2a38ff    ld      hl,(0ff38h)
+07f6 2a38ff    ld      hl,(0ff38h)	;f821h
 07f9 cd10f8    call    0f810h
 07fc 200b      jr      nz,0809h         ; (+0bh)
 07fe 3afcc2    ld      a,(0c2fch)
