@@ -18,8 +18,8 @@
 ; 81	01	CTC	Channel 1 time contant 1
 ; 82	03 	CTC	Channel 2 reset
 ; 83	03     	CTC	Channel 3 reset
-; 57	01	Bit7	ATARI RXD
-; 30	00 	DSE	Floppy Control (74LS273)
+; 57	01	Bit7	ATARI 0=CMD / *** 1=RXD ***
+; 30	00 	DSE	Floppy Control (74LS273) 0=Drive1, 1=Drive2, 2=Drive3, 3=Drive4, 4=Reset FDC, 5=Side, 6=B\S, 7=S/D\
 ; 40	d0      DWR/DRW	FDC read-write	d0 = force int (with no interrupt)
 ;--------------------------------------------------
 ; out\ ports
@@ -28,14 +28,14 @@
 ; $3x	Port Floppy Control
 ; $4x	FDC 1797
 ; $5x	U52 74LS259
-; $50	ATARI Out data
-; $51	RS232 TX
-; $52	ROM switch
-; $53	printer strobe
-; $54	reset index-pulse
-; $55	RS232 DTR
-; $56	set index pulse
-; $57	0=CMD, 1=SIO
+; 	$50	ATARI Out data
+; 	$51	RS232 TX
+; 	$52	ROM switch
+; 	$53	printer strobe
+; 	$54	reset index-pulse
+; 	$55	RS232 DTR
+; 	$56	set index pulse
+; 	$57	0=CMD, 1=SIO
 ;--------------------------------------------------
 ; in\ ports
 ;--------------------------------------------------
@@ -82,14 +82,21 @@
 002c 20e7      jr      nz,0015h           
                                           
 002e 21b900    ld      hl,00b9h		; copy BIOS from $00b9 to $f000
-0031 1100f0    ld      de,0f000h	; length efc
+0031 1100f0    ld      de,0f000h	; length 0efch
 0034 01fc0e    ld      bc,0efch           
 0037 edb0      ldir                       
-0039 21b50f    ld      hl,0fb5h		; copy from fb5 to $ff20
+0039 21b50f    ld      hl,0fb5h		; copy from fb5 to $ff20 - $ff4e
 003c 1120ff    ld      de,0ff20h	; length $2F
 003f 012f00    ld      bc,002fh           
 0042 edb0      ldir                       
-                                          
+                                        
+;FF FF FF FF 00 00 00 00
+;10 10 10 10 00 FF 01 00
+;00 00 32 0A 00 00 00 00
+;21 F8 BE F7 E1 F7 02 0D
+;0A 00 00 00 00 3C 00 80
+;00 B7 FB 00 C5 FF 0F
+					
 0044 af        xor     a		; fill up to $FFFF with zeros
 0045 12        ld      (de),a             
 0046 1c        inc     e                  
@@ -101,7 +108,7 @@
 004e ed47      ld      i,a		; with 0ffh
 0050 ed5e      im      2		; enable interrupt mode 2 (vectored)
                                           
-0052 3e4f      ld      a,4fh		; select drive 1-4, Motor off, side 0, B/S=1, DD
+0052 3e4f      ld      a,4fh		; select drive 1-4, side 0, B/S=1, DD
 0054 d330      out     (30h),a            
                                           
 0056 57        ld      d,a		; d = 4fh
@@ -120,8 +127,8 @@
                                           
 006c 1e01      ld      e,01h              
 006e 7b        ld      a,e                
-006f f640      or      40h                
-0071 d330      out     (30h),a		; selct one drive
+006f f640      or      40h          	; B/S = 1      
+0071 d330      out     (30h),a		; select one drive
 0073 e3        ex      (sp),hl  
 0074 e3        ex      (sp),hl            
 0075 cd91f3    call    0f391h		; stop command, get status
@@ -139,11 +146,11 @@
 0088 cd68f0    call    0f068h		; deselect floppies and seek current track?
                                           
 008b 215eff    ld      hl,0ff5eh	; set bit for each connected floppy?
-008e 011000    ld      bc,0010h           
+008e 011000    ld      bc,0010h         ; disc control block at ff5e length 16 bytes??  
 0091 3e04      ld      a,04h              
 0093 cb1a      rr      d                  
 0095 3802      jr      c,0099h            
-0097 cbf6      set     6,(hl)             
+0097 cbf6      set     6,(hl)           ; set bit for each floppy?  
 0099 09        add     hl,bc              
 009a 3d        dec     a                  
 009b 20f6      jr      nz,0093h           

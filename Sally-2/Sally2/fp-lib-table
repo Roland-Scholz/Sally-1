@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name "AtariXL")(type "KiCad")(uri "C:/github/Sally-1/Sally-2/atari-sio-connector-master")(options "")(descr ""))
+  (lib (name "Sally2")(type "KiCad")(uri "C:/github/Sally-1/Sally-2/Sally2.pretty")(options "")(descr ""))
+)
