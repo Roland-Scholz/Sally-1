@@ -21,7 +21,7 @@
 ; $5x	U52 74LS259
 ; 	$50	ATARI Out data
 ; 	$51	RS232 TX
-; 	$52	ROM switch
+; 	$52	ROM switch	(0=ROM 0-7fffh, 1=RAM only)
 ; 	$53	printer strobe
 ; 	$54	reset index-pulse
 ; 	$55	RS232 DTR
