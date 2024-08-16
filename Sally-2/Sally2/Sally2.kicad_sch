@@ -7255,6 +7255,28 @@
 			)
 		)
 	)
+	(global_label "M1\\"
+		(shape input)
+		(at 21.59 158.75 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "8578f360-55be-494f-bc67-dde4df96d4ba")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 15.6693 158.6706 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+				(hide yes)
+			)
+		)
+	)
 	(global_label "STROBE"
 		(shape input)
 		(at 181.61 81.915 0)

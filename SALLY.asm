@@ -82,7 +82,7 @@
 002c 20e7      jr      nz,0015h           
                                           
 002e 21b900    ld      hl,00b9h		; copy BIOS from $00b9 to $f000
-0031 1100f0    ld      de,0f000h	; length 0efch
+0031 1100f0    ld      de,0f000h	; length 0efch (0b9h to fb4h)
 0034 01fc0e    ld      bc,0efch           
 0037 edb0      ldir                       
 0039 21b50f    ld      hl,0fb5h		; copy from fb5 to $ff20 - $ff4e
