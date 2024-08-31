@@ -8,6 +8,14 @@ import java.util.ArrayList;
 
 public class SallyConv {
 
+	private String int2hex(Integer i) {
+		return String.format("%04x", i);
+	}
+
+	private String getLabel(int org, String s) {
+		return "l" + int2hex(org + Integer.parseInt(s, 16));
+	}
+
 	public SallyConv(String[] args) {
 
 		try {
@@ -18,14 +26,14 @@ public class SallyConv {
 			String outline;
 			String[] tokens;
 			String[] jmp;
-			String op;
-			int address = 0xf000;
-			int label;
+			int org = 0x0100;
+			int address = org;
+			String label;
 
-			ArrayList<Integer> labels = new ArrayList<Integer>();
+			ArrayList<String> labels = new ArrayList<String>();
 			ArrayList<String> source = new ArrayList<String>();
 
-			source.add("f000:\t\tORG\t0f000h");
+			source.add("l0100:\t\tORG\t00100h");
 
 			for (;;) {
 				line = fin.readLine();
@@ -49,18 +57,20 @@ public class SallyConv {
 
 					jmp = tokens[3].split(",");
 					if (!tokens[3].contains(",")) {
-						label = 0xf000 + Integer.parseInt(tokens[3].substring(1, 4), 16);
-						outline = Integer.toHexString(address) + ":\t\t" + tokens[2] + "\t" + Integer.toHexString(label)
-								+ "\t\t; " + tokens[tokens.length - 1];
+						label = getLabel(org, tokens[3].substring(1, 4));
+
+						outline = getLabel(0, int2hex(address)) + ":\t\t" + tokens[2] + "\t" + label + "\t\t; "
+								+ tokens[tokens.length - 1];
 					} else {
-						label = 0xf000 + Integer.parseInt(jmp[1].substring(1, 4), 16);
-						outline = Integer.toHexString(address) + ":\t\t" + tokens[2] + "\t" + jmp[0] + ","
-								+ Integer.toHexString(label) + "\t\t; " + tokens[tokens.length - 1];
+						label = getLabel(org, jmp[1].substring(1, 4));
+
+						outline = getLabel(0, int2hex(address)) + ":\t\t" + tokens[2] + "\t" + jmp[0] + "," + label
+								+ "\t\t; " + tokens[tokens.length - 1];
 					}
 					labels.add(label);
 
 				} else {
-					outline = Integer.toHexString(address) + ":\t";
+					outline = getLabel(0, int2hex(address)) + ":\t";
 					for (int i = 2; i < tokens.length; i++) {
 						outline = outline + "\t" + tokens[i];
 					}
@@ -74,19 +84,22 @@ public class SallyConv {
 			}
 
 			for (String s : source) {
-				if (!s.startsWith(";") && s.length() > 4) {
-					address = Integer.parseInt(s.substring(0, 4), 16);
-					if (!labels.contains(address)) {
-						s = "     " + s.substring(5);
+
+				if (!s.startsWith(";") && s.length() > 5) {
+					label = getLabel(0, s.substring(1, 5));
+
+					if (!labels.contains(label)) {
+						s = "     " + s.substring(6);
 					}
 				}
+
 				System.out.println(s);
 				fout.write(s + "\n");
 			}
 
-//			for (Integer l : labels) {
-//				System.out.println(l);
-//			}
+			for (String l : labels) {
+				System.out.println(l);
+			}
 
 			fin.close();
 			fout.close();
