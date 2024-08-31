@@ -151,7 +151,7 @@
 0093 cb1a      rr      d                  
 0095 3802      jr      c,0099h            
 0097 cbf6      set     6,(hl)           ; set bit for each floppy?  
-0099 09        add     hl,bc              
+0099 09        add     hl,bc            ; yes "online" in byte 8 of percom block   
 009a 3d        dec     a                  
 009b 20f6      jr      nz,0093h           
                                           
